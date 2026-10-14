@@ -1,0 +1,13 @@
+diff --git a/drivers/wireless/cyw43439/wifi.zig b/drivers/wireless/cyw43439/wifi.zig
+index 2a029a13..d96f886e 100644
+--- a/drivers/wireless/cyw43439/wifi.zig
++++ b/drivers/wireless/cyw43439/wifi.zig
+@@ -374,6 +374,8 @@ pub const JoinOptions = struct {
+
+ pub fn join(self: *Self, ssid: []const u8, pwd: []const u8, opt: JoinOptions) !JoinPoller {
+     self.err = null;
++    self.event_log = .{};
++    self.join_state = .none;
+
+     var buf: [64]u8 = @splat(0); // space for 10 addresses
+     // Enable multicast

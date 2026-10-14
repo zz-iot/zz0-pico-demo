@@ -1,0 +1,27 @@
+.{
+    .name = .zz0_pico_demo,
+    .version = "0.0.0",
+    .fingerprint = 0x10696878d120fd4c,
+    .minimum_zig_version = "0.15.1",
+    .dependencies = .{
+        .microzig = .{
+            .path = "../microzig",
+        },
+        .zz0_client = .{
+            .path = "../zz0_client",
+        },
+        .net = .{
+            .path = "../microzig/modules/network",
+        },
+        .zidl_rt = .{
+            .path = "../zidl/packages/zidl-rt",
+        },
+    },
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "idl",
+        "src",
+        "README.md",
+    },
+}
