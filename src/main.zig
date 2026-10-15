@@ -62,7 +62,7 @@ fn usbLog(
     }
 }
 
-pub const microzig_options = microzig.Options{
+pub const std_options = microzig.std_options(.{
     .log_level = .debug,
     .log_scope_levels = &.{
         .{ .scope = .usb_dev, .level = .warn },
@@ -70,7 +70,12 @@ pub const microzig_options = microzig.Options{
         .{ .scope = .usb_cdc, .level = .warn },
     },
     .logFn = usbLog,
-};
+});
+
+pub const panic = microzig.panic;
+comptime {
+    _ = microzig.export_startup();
+}
 
 const ClientSession = zz0_client.session.ClientSession;
 
