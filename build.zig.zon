@@ -2,7 +2,7 @@
     .name = .zz0_pico_demo,
     .version = "0.0.0",
     .fingerprint = 0x10696878d120fd4c,
-    .minimum_zig_version = "0.15.1",
+    .minimum_zig_version = "0.17.0",
     .dependencies = .{
         .microzig = .{
             .path = "../microzig",
@@ -13,8 +13,9 @@
         .net = .{
             .path = "../microzig/modules/network",
         },
-        .zidl_rt = .{
-            .path = "../zidl/packages/zidl-rt",
+        .zidl = .{
+            .url = "https://github.com/zz-iot/zidl/archive/refs/tags/v0.3.21-zig.0.17.0.tar.gz",
+            .hash = "zidl-0.3.21-zig.0.17.0-H6NwLifoLwApXo4JO2G9PTgiMqExxddtA-79SISqto93",
         },
     },
     .paths = .{

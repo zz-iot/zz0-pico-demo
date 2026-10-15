@@ -16,16 +16,16 @@ Current scope:
 WiFi credentials and agent endpoint settings live in ignored `src/secrets.zig`.
 Start from `src/secrets.zig.template`.
 
-Build with Zig 0.15.1:
+Build with Zig 0.17.0:
 
 ```sh
 zig build
 ```
 
 The build generates `CounterStatus` Zig typesupport from
-`idl/counter_types.idl` using a prebuilt local `zidl` binary. By default it uses
-`../zidl/zig-out/bin/zidl`; override that with
-`-Dzidl=/path/to/zidl` if needed.
+`idl/counter_types.idl` using the pinned zidl 0.3.21 release. The build compiles
+the generator for the host and uses the runtime from the same package for the
+firmware targets. Override the generator with `-Dzidl=/path/to/zidl` if needed.
 
 LED diagnostics on the CYW43 LED:
 
@@ -49,13 +49,13 @@ local XRCE session state, recreates the by-reference participant/topic/publisher
 datawriter path, and resumes publishing.
 
 The current development layout expects sibling checkouts of `zz0_client`,
-`microzig` (the Zig 0.15.1-compatible revision), and `zidl`. Build `zidl` before
-building the firmware. Copy `src/secrets.zig.template` to `src/secrets.zig` and
+and `microzig` (the Zig 0.17.0-compatible revision). zidl is fetched automatically.
+Copy `src/secrets.zig.template` to `src/secrets.zig` and
 configure it locally. Both Pico firmware targets are built by `zig build`;
 UF2 and ELF outputs are installed under `zig-out/`.
 
-The tested MicroZig baseline is commit
-`3edec7f593c33b527d945b5a44f07c8cd67d7fdc` plus
+The tested MicroZig 0.17.19 baseline (Zig 0.17.0) is commit
+`33184e04252edc7eb1f33ae01ea94140f6760037` plus
 [the WiFi retry patch](patches/microzig-wifi-join-reset.patch). For a fresh checkout
 at that revision, apply it from this directory:
 

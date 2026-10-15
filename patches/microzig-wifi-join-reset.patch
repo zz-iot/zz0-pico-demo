@@ -1,8 +1,8 @@
-diff --git a/drivers/wireless/cyw43439/wifi.zig b/drivers/wireless/cyw43439/wifi.zig
-index 2a029a13..d96f886e 100644
---- a/drivers/wireless/cyw43439/wifi.zig
-+++ b/drivers/wireless/cyw43439/wifi.zig
-@@ -374,6 +374,8 @@ pub const JoinOptions = struct {
+diff --git a/drivers/src/wireless/cyw43439/wifi.zig b/drivers/src/wireless/cyw43439/wifi.zig
+index 01be9db4..435f1672 100644
+--- a/drivers/src/wireless/cyw43439/wifi.zig
++++ b/drivers/src/wireless/cyw43439/wifi.zig
+@@ -375,6 +375,8 @@ pub const JoinOptions = struct {
 
  pub fn join(self: *Self, ssid: []const u8, pwd: []const u8, opt: JoinOptions) !JoinPoller {
      self.err = null;
