@@ -381,8 +381,7 @@ fn encodeCounterSample(out: []u8, counter: u32) ![]const u8 {
         .payload = payload,
     };
 
-    var writer = zidl_rt.CdrWriter(.xcdr1).init(&bytes, allocator);
-    try writer.writeEncapHeader();
+    var writer = zidl_rt.CdrWriter(.xcdr2).init(&bytes, allocator);
     try counter_types.CounterStatus.serialize(&writer, sample);
     return bytes.items;
 }

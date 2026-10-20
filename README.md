@@ -121,3 +121,16 @@ confidence checks.
 `zig build test` runs the host identity and USB logging tests and the six focused driver
 regressions supplied by the MicroZig patches. Firmware builds still require the
 local `src/secrets.zig` configuration.
+
+### XRCE sample wire format
+
+CounterStatus WRITE_DATA uses plain little-endian XCDR2 without a DDS encapsulation
+header, matching the independent eProsima peer. Rebuild/reflash with the companion
+agent update; prior firmware emits the old encapsulated form. On 2026-10-20,
+the operator confirmed both reflashed boards passed simultaneous decoded
+publishing, agent-restart recovery and WiFi reconnect recovery against the
+updated agent. This is operator-reported hardware evidence for the new format.
+
+The client now defaults to the published OMG login layout and best-effort stream
+0x01. Run the companion agent with its default `--handshake=omg_1_0`; the eProsima
+interop mode is selected explicitly by the host test, not by this firmware.
