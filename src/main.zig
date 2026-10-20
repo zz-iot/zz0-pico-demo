@@ -5,6 +5,8 @@ const net = @import("net");
 const zidl_rt = @import("zidl_rt");
 const counter_types = @import("counter_types");
 const secrets = @import("secrets.zig");
+const demo_options = @import("demo_options");
+const identity = @import("identity.zig");
 
 const rp2xxx = microzig.hal;
 const usb = microzig.core.usb;
@@ -29,7 +31,7 @@ var usb_controller: usb.DeviceController(.{
     .vendor = USB_Device.default_vendor_id,
     .product = USB_Device.default_product_id,
     .bcd_device = .v1_00,
-    .serial = "zenzen-zero-pico",
+    .serial = demo_options.usb_serial,
     .max_supported_packet_size = USB_Device.max_supported_packet_size,
     .configurations = &.{.{
         .attributes = .{ .self_powered = false },
@@ -78,16 +80,17 @@ comptime {
 }
 
 const ClientSession = zz0_client.session.ClientSession;
+var client_key: [4]u8 = @splat(0);
 
 fn initClientSession() ClientSession {
     return ClientSession.init(.{
-        .client_key = .{ 0x5a, 0x45, 0x52, 0x4f },
+        .client_key = client_key,
         .session_id = 0x81,
     });
 }
 
 const AppState = struct {
-    session: ClientSession = initClientSession(),
+    session: ClientSession = undefined,
     led_stage: LedStage = .joining_wifi,
     awaiting_status_agent: bool = false,
     awaiting_create_status: bool = false,
@@ -128,10 +131,13 @@ pub fn main() !void {
     usb_device = .init();
     waitForUsbEnumeration(2_000);
 
-    log.info("starting Zenzen Zero Pico XRCE ping", .{});
+    log.info("starting Zenzen Zero XRCE publisher on {s}", .{demo_options.board_name});
 
     var wifi_driver: drivers.WiFi = .{};
     var wifi = try wifi_driver.init(.{});
+    client_key = identity.clientKey(wifi.mac);
+    app_state.session = initClientSession();
+    log.info("board={s} client_key={x} mac={x}", .{ demo_options.board_name, client_key, wifi.mac });
     var led = wifi.gpio(0);
     led.put(0);
 
@@ -157,6 +163,7 @@ pub fn main() !void {
     log.info("agent endpoint {f}", .{agent_endpoint});
 
     var last_write_send_us: u64 = time.get_time_since_boot().to_us();
+    var last_status_log_us: u64 = 0;
 
     while (true) {
         pollUsb();
@@ -167,6 +174,17 @@ pub fn main() !void {
         const now = time.get_time_since_boot();
         const now_us: u64 = @intCast(now.to_us());
         updateLed(&led, now);
+
+        // Keep boot/network stalls observable even when USB logging is opened late.
+        if (elapsedUs(now_us, last_status_log_us) >= 5 * std.time.us_per_s) {
+            last_status_log_us = now_us;
+            const ip: [4]u8 = @bitCast(nic.netif.ip_addr.u_addr.ip4.addr);
+            log.info("network status: wifi_joined={} ready={} flags=0x{x} ipv4={d}.{d}.{d}.{d} rx={} tx={}", .{
+                wifi.is_joined(), nic.ready(),           nic.netif.flags,
+                ip[0],            ip[1],                 ip[2],
+                ip[3],            nic.stat.recv_packets, nic.stat.send_packets,
+            });
+        }
 
         if (!wifi.is_joined()) {
             log.warn("WiFi disconnected, restarting join loop", .{});
@@ -350,7 +368,7 @@ fn encodeCounterSample(out: []u8, counter: u32) ![]const u8 {
     var bytes = std.ArrayListUnmanaged(u8).empty;
     const allocator = fba.allocator();
 
-    const board = try zidl_rt.BoundedArray(u8, 16).fromSlice("pico2-wh");
+    const board = try zidl_rt.BoundedArray(u8, 16).fromSlice(demo_options.board_name);
     const payload = try zidl_rt.BoundedArray(u8, 8).fromSlice(&.{
         @truncate(counter & 0xff),
         @truncate((counter >> 8) & 0xff),
@@ -390,7 +408,10 @@ fn joinWifiWithRetry(wifi: *drivers.WiFi.Chip, led: anytype, backoff: *RetryBack
         app_state.led_stage = .joining_wifi;
         log.info("joining WiFi SSID {s}, attempt {}", .{ secrets.ssid, attempt });
 
-        var join = wifi.join(secrets.ssid, secrets.password, secrets.join_opt) catch |err| {
+        var join_options = secrets.join_opt;
+        // Every retry in this demo uses the same SSID and credentials.
+        join_options.preserve_auto_reconnect = true;
+        var join = wifi.join(secrets.ssid, secrets.password, join_options) catch |err| {
             log.err("WiFi join start failed on attempt {}: {}", .{ attempt, err });
             app_state.led_stage = .wifi_join_failed;
             retryDelay(led, backoff.nextDelay());
@@ -554,13 +575,6 @@ fn waitForUsbEnumeration(timeout_ms: u32) void {
 }
 
 fn usbCdcWrite(serial: *USB_Serial, comptime fmt: []const u8, args: anytype) void {
-    var tx = std.fmt.bufPrint(&usb_tx_buf, fmt, args) catch return;
-
-    while (tx.len > 0) {
-        tx = tx[serial.write(tx)..];
-        pollUsb();
-    }
-    while (!serial.flush()) {
-        pollUsb();
-    }
+    const tx = std.fmt.bufPrint(&usb_tx_buf, fmt, args) catch return;
+    @import("usb_log.zig").write(serial, tx, pollUsb);
 }

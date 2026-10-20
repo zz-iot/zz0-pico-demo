@@ -7,6 +7,17 @@ const MicroBuild = microzig.MicroBuild(.{
 
 pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});
+    const identity_tests = b.addTest(.{ .root_module = b.createModule(.{
+        .root_source_file = b.path("src/identity.zig"),
+        .target = b.graph.host,
+    }) });
+    const test_step = b.step("test", "Test demo identity, USB logging and local WiFi fixes");
+    test_step.dependOn(&b.addRunArtifact(identity_tests).step);
+    const usb_log_tests = b.addTest(.{ .root_module = b.createModule(.{
+        .root_source_file = b.path("src/usb_log.zig"),
+        .target = b.graph.host,
+    }) });
+    test_step.dependOn(&b.addRunArtifact(usb_log_tests).step);
     const zidl_dep = b.dependency("zidl", .{
         .target = b.graph.host,
         .optimize = .ReleaseSafe,
@@ -18,6 +29,20 @@ pub fn build(b: *std.Build) void {
     );
 
     const mz_dep = b.dependency("microzig", .{});
+    const driver_checks = .{
+        .{ "drivers/src/wireless/cyw43439/ioctl.zig", "response payload offset" },
+        .{ "drivers/src/wireless/cyw43439/wifi.zig", "send_zc preserves" },
+        .{ "drivers/src/wireless/cyw43439/wifi.zig", "receive capacity" },
+        .{ "drivers/src/wireless/cyw43439/wifi.zig", "control response polling" },
+        .{ "drivers/src/wireless/cyw43439/wifi.zig", "join preserves automatic" },
+    };
+    inline for (driver_checks) |check| {
+        const tests = b.addTest(.{
+            .root_module = b.createModule(.{ .root_source_file = mz_dep.path(check[0]), .target = b.graph.host }),
+            .filters = &.{check[1]},
+        });
+        test_step.dependOn(&b.addRunArtifact(tests).step);
+    }
     const mb = MicroBuild.init(b, mz_dep) orelse return;
     const raspberrypi = mb.ports.rp2xxx.boards.raspberrypi;
 
@@ -31,8 +56,8 @@ pub fn build(b: *std.Build) void {
     gen_counter_types.addFileArg(b.path("idl/counter_types.idl"));
 
     const apps: []const App = &.{
-        .{ .name = "pico_zero_ping", .target = raspberrypi.pico },
-        .{ .name = "pico2_arm_zero_ping", .target = raspberrypi.pico2_arm },
+        .{ .name = "zz0_pico_w", .board_name = "pico-wh", .target = raspberrypi.pico },
+        .{ .name = "zz0_pico2_w_arm", .board_name = "pico2-wh", .target = raspberrypi.pico2_arm },
     };
 
     for (apps) |app| {
@@ -42,6 +67,11 @@ pub fn build(b: *std.Build) void {
             .optimize = optimize,
             .root_source_file = b.path("src/main.zig"),
         });
+
+        const demo_options = b.addOptions();
+        demo_options.addOption([]const u8, "board_name", app.board_name);
+        demo_options.addOption([]const u8, "usb_serial", b.fmt("zenzen-zero-{s}", .{app.board_name}));
+        firmware.exe.root_module.addOptions("demo_options", demo_options);
 
         const zz0_client_dep = b.dependency("zz0_client", .{
             .target = b.resolveTargetQuery(firmware.target.zig_target),
@@ -82,5 +112,6 @@ pub fn build(b: *std.Build) void {
 
 const App = struct {
     name: []const u8,
+    board_name: []const u8,
     target: *const microzig.Target,
 };

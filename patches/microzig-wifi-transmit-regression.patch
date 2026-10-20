@@ -1,0 +1,41 @@
+--- a/drivers/src/wireless/cyw43439/wifi.zig
++++ b/drivers/src/wireless/cyw43439/wifi.zig
+@@ -1029,3 +1029,38 @@
+     idx: u32,
+     out_idx: u32,
+ };
++
++test "send_zc preserves the packet header after the SPI command word" {
++    const Capture = struct {
++        bytes: [64]u8 = @splat(0),
++        len: usize = 0,
++        fn read(_: *anyopaque, _: []u32) void {
++            unreachable;
++        }
++        fn write(ptr: *anyopaque, words: []u32) void {
++            const self: *@This() = @ptrCast(@alignCast(ptr));
++            const bytes = mem.sliceAsBytes(words);
++            self.len = bytes.len;
++            @memcpy(self.bytes[0..bytes.len], bytes);
++        }
++        fn irq(_: *anyopaque) void {}
++        fn sleep(_: u32) void {}
++    };
++    var capture: Capture = .{};
++    var bus: Bus = .{
++        .spi = .{ .ptr = &capture, .vtable = &.{ .read = Capture.read, .write = Capture.write, .irq_cleared = Capture.irq } },
++        .sleep_ms = Capture.sleep,
++    };
++    var wifi: Self = .{ .bus = &bus };
++    // Extra backing bytes keep the old, shifted SPI read inside the allocation.
++    var backing: [68]u8 align(4) = @splat(0xee);
++    const packet = backing[0..64];
++    for (packet[22..], 0..) |*byte, i| byte.* = @intCast(i);
++    var expected_payload: [42]u8 = undefined;
++    @memcpy(&expected_payload, packet[22..]);
++    try wifi.send_zc(packet);
++    try testing.expectEqual(@as(usize, 64), capture.len);
++    const header = [_]u8{ 60, 0, 0xc3, 0xff, 1, 2, 0, 14, 0, 0, 0, 0, 0, 0, 0x20, 0, 0, 0 };
++    try testing.expectEqualSlices(u8, &header, capture.bytes[4..22]);
++    try testing.expectEqualSlices(u8, &expected_payload, capture.bytes[22..64]);
++}
