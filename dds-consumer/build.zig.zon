@@ -1,0 +1,11 @@
+.{
+    .name = .pico_counter_consumer,
+    .fingerprint = 0x3b8d1a26d343a7ce,
+    .version = "0.0.0",
+    .minimum_zig_version = "0.17.0",
+    .dependencies = .{ .zzdds = .{
+        .url = "https://github.com/zz-iot/zzdds/archive/refs/tags/v0.3.11-zig.0.17.0.tar.gz",
+        .hash = "zzdds-0.3.11-zig.0.17.0-sc7dmpqeUACXxN5BicLZDuCxAc8X8I0RH0VAvEyP66kV",
+    } },
+    .paths = .{ "build.zig", "build.zig.zon", "main.zig", "smoke.py", "README.md" },
+}

@@ -250,13 +250,7 @@ fn sendCreateClient(udp: *net.Udp, agent_endpoint: net.Endpoint, now_us: u64) !v
 fn sendNextCreate(udp: *net.Udp, agent_endpoint: net.Endpoint, now_us: u64) !void {
     const spec = demo.publish_path_entities[app_state.created_entity_count];
     var request: [128]u8 = undefined;
-    const bytes = try app_state.session.encodeCreateByReference(&request, .{
-        .object_prefix = spec.object_prefix,
-        .object_kind = spec.object_kind,
-        .reference = spec.reference,
-        .participant_domain_id = spec.participant_domain_id orelse 0,
-        .related_object_id = spec.related_object_id,
-    });
+    const bytes = try demo.encodeCreate(&app_state.session, &request, spec);
     try udp.send(bytes, agent_endpoint);
     app_state.create_resource_attempts += 1;
     app_state.awaiting_create_status = true;

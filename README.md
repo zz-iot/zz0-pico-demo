@@ -8,7 +8,7 @@ Current scope:
 - Import the reusable `zz0_client` XRCE core.
 - Join WiFi with MicroZig's CYW43/lwIP stack.
 - Send a DDS-XRCE `CREATE_CLIENT` UDP datagram to `zz0_agent`.
-- Create a by-reference participant/topic/publisher/datawriter chain after the session opens.
+- Create participant/topic references and binary publisher/datawriter resources after the session opens.
 - Publish a periodic XRCE `WRITE_DATA` sample using the generated `CounterStatus` fixture type.
 - Decode `STATUS_AGENT` responses with the reusable `zz0_client` session core.
 - Emit logs over USB CDC on `/dev/ttyACM*`, including network status every five seconds.
@@ -24,7 +24,7 @@ zig build test
 ```
 
 The build generates `CounterStatus` Zig typesupport from
-`idl/counter_types.idl` using the pinned zidl 0.3.21 release. The build compiles
+`idl/counter_types.idl` using the pinned zidl 0.3.27 release. The build compiles
 the generator for the host and uses the runtime from the same package for the
 firmware targets. Override the generator with `-Dzidl=/path/to/zidl` if needed.
 
@@ -46,14 +46,20 @@ The firmware also recovers from WiFi disconnects and agent-side restarts. WiFi
 join attempts and XRCE agent/session retries use exponential backoff starting at
 1 second and capped at 5 minutes. If an XRCE request times out or the agent
 rejects a previously valid demo write after a restart, the firmware resets its
-local XRCE session state, recreates the by-reference participant/topic/publisher/
+local XRCE session state, recreates the participant/topic/publisher/
 datawriter path, and resumes publishing.
 
-The current development layout expects sibling checkouts of `zz0_client`
-and `microzig` (the Zig 0.17.0-compatible revision). zidl is fetched automatically.
+A sibling patched `microzig` checkout is required (see the baseline below).
+The client is pinned to merged zz0_client PR #2, commit
+`9ffef195bcac18d4695ef5f7a9c58a5bf9beab85`. Both the client and zidl are fetched
+automatically; a sibling client checkout is no longer required.
 Copy `src/secrets.zig.template` to `src/secrets.zig` and
 configure it locally. Both Pico firmware targets are built by `zig build`;
 UF2 and ELF outputs are installed under `zig-out/`.
+
+CI applies the documented MicroZig patch baseline, runs the host regressions and
+builds both boards with placeholder WiFi settings. A separate job checks that the
+DDS consumer receives three samples from its host publisher fixture.
 
 The MicroZig 0.17.24 baseline (Zig 0.17.0) is commit
 `90139d6e4648dd374751f489738dd4b510d93215` with the local patches below.
@@ -114,9 +120,10 @@ a data cable and no open terminal, a terminal attached later, and a cable that
 supplies power without a working data connection. These checks were completed
 on 2026-10-19/20 with Zig 0.17.0 and the patched MicroZig baseline.
 
-The agent currently validates and logs samples; DDS forwarding is not yet
-implemented. Repeated fault cycles and extended soak tests are optional further
-confidence checks.
+The current agent forwards checked samples into DDS by default. Both-board
+forwarding and recovery results are recorded in
+[the consumer's hardware record](dds-consumer/README.md#hardware-results-2026-11-04).
+Repeated fault cycles and extended soak tests remain further confidence checks.
 
 `zig build test` runs the host identity and USB logging tests and the six focused driver
 regressions supplied by the MicroZig patches. Firmware builds still require the
@@ -134,3 +141,22 @@ updated agent. This is operator-reported hardware evidence for the new format.
 The client now defaults to the published OMG login layout and best-effort stream
 0x01. Run the companion agent with its default `--handshake=omg_1_0`; the eProsima
 interop mode is selected explicitly by the host test, not by this firmware.
+
+## XCDR2 encoding revision
+
+This project explicitly uses modern **XTypes 1.3 XCDR2**. This agrees with zidl
+and zzdds; it does not select the older XTypes 1.2 delimiter format referenced
+by XRCE 1.0. The constrained `zidl --profile xrce` limits type features and does
+not force XCDR1 or select historical XCDR2. Future historical-peer compatibility
+must be explicit; future XTypes 1.4 support will follow formal publication/review.
+
+A host [DDS CounterStatus consumer](dds-consumer/README.md) is available for
+host smoke tests and Pico -> agent -> DDS acceptance. The agent forwards through
+DDS by default using a bounded CounterStatus configuration, verified by a host
+XRCE smoke client. Pico firmware now
+uses participant/topic references and standard binary publisher/writer CREATEs,
+with REUSE and without REPLACE. Run the agent normally for forwarding;
+`--validate-only` is reserved for older compatibility tests.
+Both-board hardware forwarding and recovery have operator-reported results in
+[the consumer's hardware record](dds-consumer/README.md#hardware-results-2026-11-04).
+The consumer's DDS-only fixture source is a separate lower-level test.
