@@ -1,0 +1,66 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  firmware:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: zz0-pico-demo
+      - uses: actions/checkout@v4
+        with:
+          repository: ZigEmbeddedGroup/microzig
+          ref: 90139d6e4648dd374751f489738dd4b510d93215
+          path: microzig
+      - uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # v2.2.1
+        with:
+          version: '0.17.0'
+      - name: Apply the documented MicroZig patch baseline
+        working-directory: zz0-pico-demo
+        run: |
+          git -C ../microzig apply ../zz0-pico-demo/patches/microzig-wifi-response-offset.patch
+          git -C ../microzig apply ../zz0-pico-demo/patches/microzig-wifi-transmit-regression.patch
+          git -C ../microzig apply ../zz0-pico-demo/patches/microzig-wifi-receive-capacity.patch
+          git -C ../microzig apply ../zz0-pico-demo/patches/microzig-wifi-join-recovery.patch
+      - name: Check formatting and host regressions
+        working-directory: zz0-pico-demo
+        run: |
+          zig fmt --check build.zig build.zig.zon src dds-consumer
+          zig build test
+      - name: Build both boards with placeholder WiFi settings
+        working-directory: zz0-pico-demo
+        run: |
+          cp src/secrets.zig.template src/secrets.zig
+          zig build
+          test -s zig-out/firmware/zz0_pico_w.uf2
+          test -s zig-out/firmware/zz0_pico_w.elf
+          test -s zig-out/firmware/zz0_pico2_w_arm.uf2
+          test -s zig-out/firmware/zz0_pico2_w_arm.elf
+  dds-consumer:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # v2.2.1
+        with:
+          version: '0.17.0'
+      - name: Build and check DDS receipt
+        working-directory: dds-consumer
+        run: |
+          zig build
+          python3 smoke.py --logs "$RUNNER_TEMP/dds-consumer-logs"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dds-consumer-logs
+          path: ${{ runner.temp }}/dds-consumer-logs
