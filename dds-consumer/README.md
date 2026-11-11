@@ -49,35 +49,63 @@ This validates the tool's DDS path, not the expanded agent.
 
 ## Publishing acceptance
 
-The agent now forwards through its real DDS backend by default. Its
+The agent now forwards through its real DDS backend using an explicit configuration
+and generated typesupport library. Its
 `interop/dds_smoke.py` exercises a host XRCE client through UDP to this consumer,
 including client deletion and bounded agent shutdown. Current Pico firmware sends
 the modern binary CREATE path. Both-board forwarding and recovery were also
-reported on hardware; see the results below. Independent XRCE/DDS implementations,
-hardware malformed-data injection and longer soak tests remain further work.
+reported on hardware with the earlier built-in startup; see the results below.
+The configured startup pass was also reported successful on 2026-11-11 with the
+previous firmware images; see the newer result below. Independent XRCE/DDS
+implementations, hardware malformed-data injection and longer soak tests remain further work.
 
 ## Pico forwarding check
 
-Build the agent and this consumer with Zig 0.17.0, and rebuild/reflash the Pico
-firmware so its CREATE path matches the agent. On the host, start these in
-separate terminals before powering up the board (commands from `zz-dev`):
+Build the agent's explicit CounterStatus fixture library, the normal agent and
+this consumer with Zig 0.17.0 (commands from `zz-dev`):
 
 ```sh
-./zz0_agent/zig-out/bin/zz0_agent --write-log=summary
+cd zz0_agent
+zig build fixtures -Doptimize=ReleaseSafe
+zig build -Doptimize=ReleaseSafe
+cd ../zz0-pico-demo/dds-consumer
+zig build -Doptimize=ReleaseSafe
+cd ../..
+```
+
+Boards already using the current binary CREATE/plain-XCDR2 firmware need no reflash
+for the startup change alone. Start the agent and both consumers in separate
+terminals before powering up the boards (commands from `zz-dev`):
+
+```sh
+./zz0_agent/zig-out/bin/zz0_agent \
+  --config zz0_agent/examples/counter/agent.toml \
+  --library counter=zz0_agent/zig-out/lib/libcounter_types.so --write-log=summary
+```
+
+In another terminal:
+
+```sh
 ./zz0-pico-demo/dds-consumer/zig-out/bin/counter-consumer --board=pico-wh --count=10 --timeout=30
 ```
 
-Use `--board=pico2-wh` for Pico 2 W. Check that the consumer prints the expected
-board and increasing counters, then exits with `received 10 samples`. The firmware
+Use `--board=pico2-wh` in a second consumer for Pico 2 W. The command uses the
+Linux library filename; resources resolve relative to the manifest and the library
+path resolves from the invocation directory. `--check-config` checks the files
+offline; `--inspect` also loads/checks the provider without opening a listener.
+The example selects domain 0 and XCDR2. Agent logs now show generic acceptance,
+while this consumer decodes CounterStatus fields. Check that the consumer prints
+the expected board and increasing counters, then exits with `received 10 samples`. The firmware
 payload contains the counter's low two bytes followed by `a55a` (counter 1 prints
 `payload=0100a55a`).
 Agent STATUS/log output alone does not prove DDS receipt. Run both boards together
 with one consumer per board filter to check independent clients.
 
 Repeat after restarting the agent, resetting each board, and disconnecting and
-restoring WiFi. Restart the consumer before each trial; it exits after its sample
+restoring WiFi. Restart the agent with the same explicit configuration/library
+arguments. Restart the consumer before each trial; it exits after its sample
 count or timeout. Confirm each board resumes without interrupting the other.
-The built-in writer has finite limits (256 keyed instances), so keep each trial
+The example writer has finite limits (256 keyed instances), so keep each trial
 short and restart the agent between trials. A longer soak needs explicit instance
 lifecycle/configuration work.
 
@@ -112,3 +140,17 @@ These are reported DDS consumer observations, not just XRCE acknowledgements.
 No raw logs were captured in this record. They establish bounded forwarding and
 these recovery scenarios with our own DDS stack; they do not establish long-run
 resource behavior or independent-vendor interoperability.
+
+
+## Configured startup hardware results (2026-11-11)
+
+The operator reports that the configured agent passed the documented acceptance
+checks with the previous Pico/Pico2 firmware images, without reflashing. Both
+board-filtered consumers met the documented 10-sample checks, including recovery
+after agent restart, resetting either board while leaving the other running, and
+access-point loss/restoration.
+
+This is operator-reported evidence; raw logs, per-trial counter values and artifact
+hashes were not supplied. It qualifies the explicit configuration/library startup
+path with unchanged firmware. The 2026-11-04 record above remains evidence for the
+older built-in startup. Longer soaks and independent-vendor DDS remain separate work.

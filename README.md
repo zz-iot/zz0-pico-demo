@@ -105,11 +105,12 @@ than blocking WiFi, LED updates or publishing. Opening a terminal is optional.
 Startup allows up to two seconds for USB enumeration; it does not wait for a
 terminal to open. Under backpressure, log lines may be missing or partial.
 
-To repeat the simultaneous-client acceptance run, flash both images, then restart the
-updated agent with `--write-log=summary`. Verify distinct client keys, the correct
-board labels, independent increasing counters, and recovery after an agent
-restart. The older shared-key images can replace each other's sessions on the
-updated agent, so they should not be used for the simultaneous-client test.
+To repeat the simultaneous-client acceptance run, use distinct-key firmware on
+both boards, then start the configured agent and the two DDS consumers using
+[the forwarding commands](dds-consumer/README.md#pico-forwarding-check). Verify
+distinct client keys in agent logs, correct board labels and increasing counters
+in the consumers, and recovery after an agent restart. The older shared-key images
+can replace each other's sessions on the updated agent, so they should not be used for the simultaneous-client test.
 
 ## Hardware validation
 
@@ -120,9 +121,12 @@ a data cable and no open terminal, a terminal attached later, and a cable that
 supplies power without a working data connection. These checks were completed
 on 2026-10-19/20 with Zig 0.17.0 and the patched MicroZig baseline.
 
-The current agent forwards checked samples into DDS by default. Both-board
-forwarding and recovery results are recorded in
-[the consumer's hardware record](dds-consumer/README.md#hardware-results-2026-11-04).
+The current agent forwards checked samples using explicit resource configuration
+and a generated typesupport library. Both-board forwarding and recovery results
+are recorded in
+[the configured-startup hardware record](dds-consumer/README.md#configured-startup-hardware-results-2026-11-11),
+using the previous firmware images without reflashing. The older built-in-startup
+record is retained separately.
 Repeated fault cycles and extended soak tests remain further confidence checks.
 
 `zig build test` runs the host identity and USB logging tests and the six focused driver
@@ -151,12 +155,14 @@ not force XCDR1 or select historical XCDR2. Future historical-peer compatibility
 must be explicit; future XTypes 1.4 support will follow formal publication/review.
 
 A host [DDS CounterStatus consumer](dds-consumer/README.md) is available for
-host smoke tests and Pico -> agent -> DDS acceptance. The agent forwards through
-DDS by default using a bounded CounterStatus configuration, verified by a host
-XRCE smoke client. Pico firmware now
-uses participant/topic references and standard binary publisher/writer CREATEs,
-with REUSE and without REPLACE. Run the agent normally for forwarding;
-`--validate-only` is reserved for older compatibility tests.
-Both-board hardware forwarding and recovery have operator-reported results in
-[the consumer's hardware record](dds-consumer/README.md#hardware-results-2026-11-04).
+host smoke tests and Pico -> agent -> DDS acceptance. The configured agent uses
+explicit CounterStatus resource/manifest files and its generated shared library,
+verified by a host XRCE smoke client. Pico firmware uses participant/topic
+references and standard binary publisher/writer CREATEs, with REUSE and without
+REPLACE. The reference names are unchanged; this startup change alone does not
+require reflashing current firmware. Legacy validation-only behavior lives in
+the separate `zz0_agent_compat` executable; the normal agent rejects
+`--validate-only`.
+Both-board configured forwarding and recovery have operator-reported results in
+[the consumer's hardware record](dds-consumer/README.md#configured-startup-hardware-results-2026-11-11).
 The consumer's DDS-only fixture source is a separate lower-level test.
