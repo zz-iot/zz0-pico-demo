@@ -1,10 +1,9 @@
 --- a/drivers/src/wireless/cyw43439/wifi.zig
 +++ b/drivers/src/wireless/cyw43439/wifi.zig
-@@ -1029,3 +1029,38 @@
-     idx: u32,
+@@ -1035,6 +1035,41 @@
      out_idx: u32,
  };
-+
+
 +test "send_zc preserves the packet header after the SPI command word" {
 +    const Capture = struct {
 +        bytes: [64]u8 = @splat(0),
@@ -39,3 +38,7 @@
 +    try testing.expectEqualSlices(u8, &header, capture.bytes[4..22]);
 +    try testing.expectEqualSlices(u8, &expected_payload, capture.bytes[22..64]);
 +}
++
+ test "receive capacity rejects oversized packets and polls full Ethernet frames" {
+     const Mock = struct {
+         packet_reads: usize = 0,

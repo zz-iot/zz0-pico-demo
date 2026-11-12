@@ -2,7 +2,7 @@
     .name = .zz0_pico_demo,
     .version = "0.0.0",
     .fingerprint = 0x10696878d120fd4c,
-    .minimum_zig_version = "0.17.0",
+    .minimum_zig_version = "0.17.1",
     .dependencies = .{
         .microzig = .{
             .path = "../microzig",
@@ -23,6 +23,7 @@
         "build.zig",
         "build.zig.zon",
         "idl",
+        "patches",
         "dds-consumer",
         "src",
         "README.md",
