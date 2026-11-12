@@ -16,7 +16,7 @@ Current scope:
 WiFi credentials and agent endpoint settings live in ignored `src/secrets.zig`.
 Start from `src/secrets.zig.template`.
 
-Build with Zig 0.17.0:
+Build the firmware with Zig 0.17.1:
 
 ```sh
 zig build
@@ -61,21 +61,26 @@ CI applies the documented MicroZig patch baseline, runs the host regressions and
 builds both boards with placeholder WiFi settings. A separate job checks that the
 DDS consumer receives three samples from its host publisher fixture.
 
-The MicroZig 0.17.24 baseline (Zig 0.17.0) is commit
-`90139d6e4648dd374751f489738dd4b510d93215` with the local patches below.
+The MicroZig 0.17.37 baseline (Zig 0.17.1) is commit
+`03edc03149ea7432a35b8aa4c3ee2302b7348cc6` with the local patches below.
 Apply them in order from this directory to a clean checkout at that revision:
 
 ```sh
-git -C ../microzig apply ../zz0-pico-demo/patches/microzig-wifi-response-offset.patch
 git -C ../microzig apply ../zz0-pico-demo/patches/microzig-wifi-transmit-regression.patch
-git -C ../microzig apply ../zz0-pico-demo/patches/microzig-wifi-receive-capacity.patch
 git -C ../microzig apply ../zz0-pico-demo/patches/microzig-wifi-join-recovery.patch
 ```
 
 See [patches/README.md](patches/README.md) for scope, regression tests and
-upstream submission considerations. MicroZig 0.17.24 already includes the
-BDC-padding and transmit-offset fixes from
-[PR #1093](https://github.com/ZigEmbeddedGroup/microzig/pull/1093).
+upstream contribution status. This release includes the transmit-offset,
+receive-capacity and response-offset fixes from
+[PR #1093](https://github.com/ZigEmbeddedGroup/microzig/pull/1093),
+[PR #1094](https://github.com/ZigEmbeddedGroup/microzig/pull/1094) and
+[PR #1095](https://github.com/ZigEmbeddedGroup/microzig/pull/1095).
+The remaining local patches cover join recovery and an additional transmit test.
+
+The DDS consumer is a separate host application and continues to use Zig 0.17.0
+in CI. Previous hardware acceptance runs used the older firmware baseline;
+images built with MicroZig 0.17.37 and Zig 0.17.1 need a fresh hardware run.
 
 ## Board identity and flashing
 
