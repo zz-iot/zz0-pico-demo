@@ -4,7 +4,7 @@ pub const std_options: std.Options = .{ .log_level = .warn };
 const dds = @import("zzdds");
 const DDS = dds.DDS;
 const T = @import("counter_types").CounterStatus;
-const rt = @import("zidl_rt");
+const rt = @import("zidl_cdr");
 pub fn main(init: std.process.Init) !void {
     const alloc = init.arena.allocator();
     var args = try std.process.Args.Iterator.initAllocator(init.minimal.args, alloc);

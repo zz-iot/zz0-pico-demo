@@ -5,8 +5,8 @@ A small host-only zzdds application for the Pico demo. It reads the same
 board, counter and payload. It is separate from the firmware build; MicroZig and
 WiFi secrets are not needed.
 
-Use Zig 0.17.1. The consumer pins zzdds 0.3.11 and uses that package's
-zidl 0.3.27 generator/runtime; sibling zzdds and zidl checkouts are not required.
+Use Zig 0.17.1. The consumer pins zzdds 0.3.13 and uses that package's
+zidl 0.3.37 generator and `zidl_cdr`/`zidl_bindings` runtime modules; sibling zzdds and zidl checkouts are not required.
 Override the IDL path with
 `-Dcounter-idl=/path/to/counter_types.idl` if needed.
 
@@ -122,6 +122,12 @@ the agent and this consumer, including RESET, client deletion and clean shutdown
 These are host checks. The board observations below are from earlier firmware;
 they are not a hardware rerun of these dependency pins.
 
+## Release-pin validation (2026-11-20)
+
+With Zig 0.17.1 and the patched MicroZig 0.17.37 baseline, both Pico targets
+produced UF2 and ELF outputs using placeholder WiFi configuration and the host/driver
+tests passed. Firmware uses zidl 0.3.37 and zz0_client PR #3's merged commit; this
+consumer pins zzdds 0.3.13 and its smoke test received all three fixture samples.
 
 ## Hardware results (2026-11-04)
 

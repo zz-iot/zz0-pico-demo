@@ -88,19 +88,26 @@ pub fn build(b: *std.Build) void {
         });
         firmware.exe.root_module.addImport("net", net_dep.module("net"));
 
-        const zidl_rt_mod = b.createModule(.{
-            .root_source_file = zidl_dep.path("packages/zidl-rt/src/root.zig"),
+        const zidl_cdr_mod = b.createModule(.{
+            .root_source_file = zidl_dep.path("packages/zidl-cdr/src/root.zig"),
             .target = b.resolveTargetQuery(firmware.target.zig_target),
             .optimize = optimize,
         });
-        firmware.exe.root_module.addImport("zidl_rt", zidl_rt_mod);
+        const zidl_bindings_mod = b.createModule(.{
+            .root_source_file = zidl_dep.path("packages/zidl-bindings/src/root.zig"),
+            .target = b.resolveTargetQuery(firmware.target.zig_target),
+            .optimize = optimize,
+            .imports = &.{.{ .name = "zidl_cdr", .module = zidl_cdr_mod }},
+        });
+        firmware.exe.root_module.addImport("zidl_cdr", zidl_cdr_mod);
 
         const counter_types_mod = b.createModule(.{
             .root_source_file = gen_counter_types_dir.path(b, "counter_types.zig"),
             .target = b.resolveTargetQuery(firmware.target.zig_target),
             .optimize = optimize,
             .imports = &.{
-                .{ .name = "zidl_rt", .module = zidl_rt_mod },
+                .{ .name = "zidl_cdr", .module = zidl_cdr_mod },
+                .{ .name = "zidl_bindings", .module = zidl_bindings_mod },
             },
         });
         firmware.exe.root_module.addImport("counter_types", counter_types_mod);

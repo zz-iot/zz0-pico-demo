@@ -2,7 +2,7 @@ const std = @import("std");
 const microzig = @import("microzig");
 const zz0_client = @import("zz0_client");
 const net = @import("net");
-const zidl_rt = @import("zidl_rt");
+const zidl_cdr = @import("zidl_cdr");
 const counter_types = @import("counter_types");
 const secrets = @import("secrets.zig");
 const demo_options = @import("demo_options");
@@ -362,8 +362,8 @@ fn encodeCounterSample(out: []u8, counter: u32) ![]const u8 {
     var bytes = std.ArrayListUnmanaged(u8).empty;
     const allocator = fba.allocator();
 
-    const board = try zidl_rt.BoundedArray(u8, 16).fromSlice(demo_options.board_name);
-    const payload = try zidl_rt.BoundedArray(u8, 8).fromSlice(&.{
+    const board = try zidl_cdr.BoundedArray(u8, 16).fromSlice(demo_options.board_name);
+    const payload = try zidl_cdr.BoundedArray(u8, 8).fromSlice(&.{
         @truncate(counter & 0xff),
         @truncate((counter >> 8) & 0xff),
         0xa5,
@@ -375,7 +375,7 @@ fn encodeCounterSample(out: []u8, counter: u32) ![]const u8 {
         .payload = payload,
     };
 
-    var writer = zidl_rt.CdrWriter(.xcdr2).init(&bytes, allocator);
+    var writer = zidl_cdr.CdrWriter(.xcdr2).init(&bytes, allocator);
     try counter_types.CounterStatus.serialize(&writer, sample);
     return bytes.items;
 }
