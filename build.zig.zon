@@ -8,15 +8,15 @@
             .path = "../microzig",
         },
         .zz0_client = .{
-            .url = "https://github.com/zz-iot/zz0_client/archive/9ffef195bcac18d4695ef5f7a9c58a5bf9beab85.tar.gz",
-            .hash = "zz0_client-0.0.0-ApCz78nWAQCOpgD16E4Wgh0i5LsSGJbIjupaHryx8i5N",
+            .url = "https://github.com/zz-iot/zz0_client/archive/1458d23326f2e93e5190e5506b7f71c02a1441f5.tar.gz",
+            .hash = "zz0_client-0.0.0-ApCz78nWAQBJb619oaW8VJO0VFdHW-_HEPYdvHcRZ53W",
         },
         .net = .{
             .path = "../microzig/modules/network",
         },
         .zidl = .{
-            .url = "https://github.com/zz-iot/zidl/archive/refs/tags/v0.3.27-zig.0.17.0.tar.gz",
-            .hash = "zidl-0.3.27-zig.0.17.0-H6NwLvSQMgANdvCHlzeftnv9GheGazWx5MWAFtzTbU1H",
+            .url = "https://github.com/zz-iot/zidl/archive/refs/tags/v0.3.37-zig.0.17.1.tar.gz",
+            .hash = "zidl-0.3.37-zig.0.17.1-H6NwLuEjOgD330pmTruqjV2qBvjZTeTX7wEMXTw23UrM",
         },
     },
     .paths = .{

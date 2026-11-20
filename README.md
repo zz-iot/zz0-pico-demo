@@ -24,9 +24,9 @@ zig build test
 ```
 
 The build generates `CounterStatus` Zig typesupport from
-`idl/counter_types.idl` using the pinned zidl 0.3.27 release. The build compiles
-the generator for the host and uses the runtime from the same package for the
-firmware targets. Override the generator with `-Dzidl=/path/to/zidl` if needed.
+`idl/counter_types.idl` using the pinned zidl 0.3.37 release. The build compiles
+the generator for the host and builds the same package's `zidl_cdr` and
+`zidl_bindings` runtime modules for the firmware targets. Override the generator with `-Dzidl=/path/to/zidl` if needed.
 
 LED diagnostics on the CYW43 LED:
 
@@ -50,8 +50,8 @@ local XRCE session state, recreates the participant/topic/publisher/
 datawriter path, and resumes publishing.
 
 A sibling patched `microzig` checkout is required (see the baseline below).
-The client is pinned to merged zz0_client PR #2, commit
-`9ffef195bcac18d4695ef5f7a9c58a5bf9beab85`. Both the client and zidl are fetched
+The client is pinned to merged zz0_client PR #3, commit
+`1458d23326f2e93e5190e5506b7f71c02a1441f5`. Both the client and zidl are fetched
 automatically; a sibling client checkout is no longer required.
 Copy `src/secrets.zig.template` to `src/secrets.zig` and
 configure it locally. Both Pico firmware targets are built by `zig build`;
@@ -78,8 +78,8 @@ receive-capacity and response-offset fixes from
 [PR #1095](https://github.com/ZigEmbeddedGroup/microzig/pull/1095).
 The remaining local patches cover join recovery and an additional transmit test.
 
-The DDS consumer is a separate host application and continues to use Zig 0.17.0
-in CI. Previous hardware acceptance runs used the older firmware baseline;
+The DDS consumer is a separate host application and also uses Zig 0.17.1 in CI.
+Previous hardware acceptance runs used the older firmware baseline;
 images built with MicroZig 0.17.37 and Zig 0.17.1 need a fresh hardware run.
 
 ## Board identity and flashing
