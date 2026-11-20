@@ -78,8 +78,8 @@ receive-capacity and response-offset fixes from
 [PR #1095](https://github.com/ZigEmbeddedGroup/microzig/pull/1095).
 The remaining local patches cover join recovery and an additional transmit test.
 
-The DDS consumer is a separate host application and continues to use Zig 0.17.0
-in CI. Previous hardware acceptance runs used the older firmware baseline;
+The DDS consumer is a separate host application and also uses Zig 0.17.1 in CI.
+Previous hardware acceptance runs used the older firmware baseline;
 images built with MicroZig 0.17.37 and Zig 0.17.1 need a fresh hardware run.
 
 ## Board identity and flashing

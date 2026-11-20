@@ -5,7 +5,7 @@ A small host-only zzdds application for the Pico demo. It reads the same
 board, counter and payload. It is separate from the firmware build; MicroZig and
 WiFi secrets are not needed.
 
-Use Zig 0.17.0. The consumer pins zzdds 0.3.11 and uses that package's
+Use Zig 0.17.1. The consumer pins zzdds 0.3.11 and uses that package's
 zidl 0.3.27 generator/runtime; sibling zzdds and zidl checkouts are not required.
 Override the IDL path with
 `-Dcounter-idl=/path/to/counter_types.idl` if needed.
@@ -62,7 +62,7 @@ implementations, hardware malformed-data injection and longer soak tests remain 
 ## Pico forwarding check
 
 Build the agent's explicit CounterStatus fixture library, the normal agent and
-this consumer with Zig 0.17.0 (commands from `zz-dev`):
+this consumer with Zig 0.17.1 (commands from `zz-dev`):
 
 ```sh
 cd zz0_agent
